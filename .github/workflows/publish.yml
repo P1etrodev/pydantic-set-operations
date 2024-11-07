@@ -49,6 +49,10 @@ jobs:
     permissions:
       id-token: write
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+    
       - name: Check repository structure
         run: ls -R
 
