@@ -5,9 +5,9 @@ with open("README.md", "r") as f:
 
 setup(
 	name="pydantic_set_operations",
-	version="1.0.8",
+	version="1.0.9",
 	description="An enhanced version of Pydantic's BaseModel, allowing for advanced model "
-	            "manipulations.",
+	            "manipulations. (Inspired in TypeScript)",
 	package_dir={"": "src"},
 	packages=find_packages(where="src"),
 	long_description=long_description,
