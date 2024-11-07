@@ -1,4 +1,4 @@
-﻿# Pydantic-Set-Operations
+﻿## Pydantic-Set-Operations
 
 The `Pydantic-Set-Operations` package provides an enhanced version of Pydantic's `BaseModel`, allowing for advanced model manipulations, such as field unions, exclusions, and intersections. This subclass of `BaseModel` introduces bitwise operations (like `|`, `&`, and `-`) for combining, intersecting, and excluding fields between models.
 
