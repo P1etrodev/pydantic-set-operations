@@ -154,7 +154,7 @@ class ExtendedBaseModel(BaseModel):
 		return self.omit(
 			self.__repr_name__(),
 			*other.model_dump().keys(),
-			self.model_config
+			self.model_config,
 		)(**self.model_dump())
 	
 	def __or__(self, other: 'ExtendedBaseModel') -> BaseModel:

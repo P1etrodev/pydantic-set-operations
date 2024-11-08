@@ -1,5 +1,7 @@
 ﻿# Pydantic-Set-Operations
 
+[![Public PYPI package](https://github.com/P1etrodev/pydantic-set-operations/actions/workflows/publish.yml/badge.svg)](https://github.com/P1etrodev/pydantic-set-operations/actions/workflows/publish.yml)
+
 `Pydantic-Set-Operations` provides an enhanced version of Pydantic's `BaseModel`, allowing for advanced model manipulations, such as field unions, exclusions, and intersections. `ExtendedBaseModel` introduces bitwise operations (like `|`, `&`, and `-`) for combining, intersecting, and excluding fields between models.
 
 This package is ideal for projects that require dynamic model restructuring or filtering based on specific fields.
