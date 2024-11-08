@@ -1,3 +1,5 @@
+from typing import Type
+
 from pydantic import BaseModel, create_model
 
 
@@ -9,7 +11,7 @@ class ExtendedBaseModel(BaseModel):
 	"""
 	
 	@classmethod
-	def union(cls, _name: str, other: 'ExtendedBaseModel') -> type[BaseModel]:
+	def union(cls, _name: str, other: 'ExtendedBaseModel') -> Type['ExtendedBaseModel']:
 		"""
 		Creates a new model that merges fields from the current class and another
 		ExtendedBaseModel class. In case of overlapping fields, values and data types
@@ -27,10 +29,10 @@ class ExtendedBaseModel(BaseModel):
 		fields_data = {*other.__annotations__.items(), *cls.__annotations__.items()}
 		# Construct new fields with types and make them required (indicated by `...`)
 		new_fields = {field: (annotation, ...) for field, annotation in fields_data}
-		return create_model(_name, **new_fields)
+		return create_model(_name, __base__=cls, **new_fields)
 	
 	@classmethod
-	def omit(cls, _name: str, *excluded_fields: str) -> type[BaseModel]:
+	def omit(cls, _name: str, *excluded_fields: str) -> Type['ExtendedBaseModel']:
 		"""
 		Exclude specified fields from the current model to create a new model with
 		only the remaining fields.
@@ -48,10 +50,10 @@ class ExtendedBaseModel(BaseModel):
 			for field in cls.__annotations__
 			if field not in excluded_fields
 		}
-		return create_model(_name, **new_fields)
+		return create_model(_name, __base__=cls, **new_fields)
 	
 	@classmethod
-	def pick(cls, _name: str, *included_fields: str) -> type[BaseModel]:
+	def pick(cls, _name: str, *included_fields: str) -> Type['ExtendedBaseModel']:
 		"""
 		Generate a new model with only the specified fields from the current model.
 		
@@ -68,9 +70,9 @@ class ExtendedBaseModel(BaseModel):
 			for field in cls.__annotations__
 			if field in included_fields
 		}
-		return create_model(_name, **new_fields)
+		return create_model(_name, __base__=cls, **new_fields)
 	
-	def __and__(self, other: 'ExtendedBaseModel') -> BaseModel:
+	def __and__(self, other: 'ExtendedBaseModel') -> 'ExtendedBaseModel':
 		"""
 		Creates a new instance containing only fields common to both the current
 		model (self) and another model. For common fields, values and data types
@@ -93,7 +95,7 @@ class ExtendedBaseModel(BaseModel):
 		# Use pick to create a new model with the common fields
 		return self.pick(self.__repr_name__(), *fields)(**data)
 	
-	def __sub__(self, other: 'ExtendedBaseModel') -> BaseModel:
+	def __sub__(self, other: 'ExtendedBaseModel') -> 'ExtendedBaseModel':
 		"""
 		Creates a new instance by excluding fields present in another model from
 		the current model (self).
@@ -111,7 +113,7 @@ class ExtendedBaseModel(BaseModel):
 			*other.model_dump().keys()
 		)(**self.model_dump())
 	
-	def __or__(self, other: 'ExtendedBaseModel') -> BaseModel:
+	def __or__(self, other: 'ExtendedBaseModel') -> 'ExtendedBaseModel':
 		"""
 		Combines fields from the current model (self) and another model. For fields
 		present in both models, values and data types from the current model (self)
