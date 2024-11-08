@@ -6,15 +6,21 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Public PYPI package
+name: CD
 
 on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '*.md'
 
 permissions:
   contents: read
+
+concurrency:
+  group: cd-${{github.ref}}
+  cancel-in-progress: true
 
 jobs:
   pypi-publish:
