@@ -1,133 +1,98 @@
+from os import makedirs
+
 from pydantic import BaseModel, create_model
+from typing import Type
 
 
 class ExtendedBaseModel(BaseModel):
-	"""
-	A subclass of BaseModel that adds advanced operations for field union, exclusion,
-	and difference. This class supports bitwise operators (|, &, -) between instances,
-	where the left instance (self) takes precedence for both values and data types.
-	"""
+	# Aquí se omite el código anterior para centrarse en la generación del archivo .pyi
 	
 	@classmethod
-	def union(cls, _name: str, other: 'ExtendedBaseModel') -> type[BaseModel]:
+	def generate_pyi(cls, _name: str, fields: dict):
+		"""
+		Generate a .pyi file for the dynamically created model to provide type hints to IDEs.
+		
+		Args:
+				_name (str): The name of the new model.
+				fields (dict): A dictionary of field names and types to be included in the .pyi file.
+		"""
+		makedirs('types/', exist_ok=True)
+		pyi_filename = f"types/{_name}.pyi"
+		with open(pyi_filename, "w") as pyi_file:
+			pyi_file.write(f"from pydantic import BaseModel\n\n")
+			pyi_file.write(f"class {_name}(BaseModel):\n")
+			
+			for field, (field_type, _) in fields.items():
+				pyi_file.write(f"    {field}: {field_type.__name__}\n")
+	
+	@classmethod
+	def union(cls, _name: str, other: 'ExtendedBaseModel') -> Type[BaseModel]:
 		"""
 		Creates a new model that merges fields from the current class and another
 		ExtendedBaseModel class. In case of overlapping fields, values and data types
 		from the current model (self) take precedence.
 		
 		Args:
-			_name (str): The name for the new model.
-			other (ExtendedBaseModel): Another model to merge fields with.
+				_name (str): The name for the new model.
+				other (ExtendedBaseModel): Another model to merge fields with.
 		
 		Returns:
-			BaseModel: A new model including fields from both the current class and
-			the other model.
+				Type[BaseModel]: A new model including fields from both the current class and
+				the other model.
 		"""
 		# Merge annotations from both models, with precedence for the current class
 		fields_data = {*other.__annotations__.items(), *cls.__annotations__.items()}
-		# Construct new fields with types and make them required (indicated by `...`)
 		new_fields = {field: (annotation, ...) for field, annotation in fields_data}
+		
+		# Generate .pyi file for the new model
+		cls.generate_pyi(_name, new_fields)
+		
+		# Return the new model
 		return create_model(_name, **new_fields)
 	
 	@classmethod
-	def omit(cls, _name: str, *excluded_fields: str) -> type[BaseModel]:
+	def omit(cls, _name: str, *excluded_fields: str) -> Type[BaseModel]:
 		"""
 		Exclude specified fields from the current model to create a new model with
 		only the remaining fields.
 		
 		Args:
-			_name (str): The name for the new model.
-			*excluded_fields (str): Fields to exclude from the model.
+				_name (str): The name for the new model.
+				*excluded_fields (str): Fields to exclude from the model.
 		
 		Returns:
-			BaseModel: A new model excluding the specified fields.
+				Type[BaseModel]: A new model excluding the specified fields.
 		"""
-		# Filter out fields specified in excluded_fields
 		new_fields = {
-			field: (cls.__annotations__[field], ...)
+			field: (cls.__annotations__[field], cls.model_fields[field])
 			for field in cls.__annotations__
 			if field not in excluded_fields
 		}
+		
+		# Generate .pyi file for the new model
+		cls.generate_pyi(_name, new_fields)
+		
 		return create_model(_name, **new_fields)
 	
 	@classmethod
-	def pick(cls, _name: str, *included_fields: str) -> type[BaseModel]:
+	def pick(cls, _name: str, *included_fields: str) -> Type[BaseModel]:
 		"""
 		Generate a new model with only the specified fields from the current model.
 		
 		Args:
-			_name (str): The name for the new model.
-			*included_fields (str): Fields to include in the new model.
+				_name (str): The name for the new model.
+				*included_fields (str): Fields to include in the new model.
 		
 		Returns:
-			BaseModel: A new model containing only the specified fields.
+				Type[BaseModel]: A new model containing only the specified fields.
 		"""
-		# Select fields specified in included_fields
 		new_fields = {
-			field: (cls.__annotations__[field], ...)
+			field: (cls.__annotations__[field], cls.model_fields[field])
 			for field in cls.__annotations__
 			if field in included_fields
 		}
+		
+		# Generate .pyi file for the new model
+		cls.generate_pyi(_name, new_fields)
+		
 		return create_model(_name, **new_fields)
-	
-	def __and__(self, other: 'ExtendedBaseModel') -> BaseModel:
-		"""
-		Creates a new instance containing only fields common to both the current
-		model (self) and another model. For common fields, values and data types
-		from the current model take precedence.
-		
-		Args:
-			other (ExtendedBaseModel): Another model to find common fields with.
-		
-		Returns:
-			BaseModel: A new model with fields shared by both models, taking values
-			and data types from the current model for overlapping fields.
-		"""
-		# Dump current and other model data into dictionaries
-		self_dump = self.model_dump()
-		other_dump = other.model_dump()
-		# Find common fields between both models
-		fields = self_dump.keys() & other_dump.keys()
-		# Build data for the new model using values from self
-		data = {field: self_dump[field] for field in fields}
-		# Use pick to create a new model with the common fields
-		return self.pick(self.__repr_name__(), *fields)(**data)
-	
-	def __sub__(self, other: 'ExtendedBaseModel') -> BaseModel:
-		"""
-		Creates a new instance by excluding fields present in another model from
-		the current model (self).
-		
-		Args:
-			other (ExtendedBaseModel): Another model whose fields will be excluded
-			from the current model.
-		
-		Returns:
-			BaseModel: A new model without fields that exist in the other model.
-		"""
-		# Use omit to exclude fields present in the other model
-		return self.omit(
-			self.__repr_name__(),
-			*other.model_dump().keys()
-		)(**self.model_dump())
-	
-	def __or__(self, other: 'ExtendedBaseModel') -> BaseModel:
-		"""
-		Combines fields from the current model (self) and another model. For fields
-		present in both models, values and data types from the current model (self)
-		take precedence.
-		
-		Args:
-			other (ExtendedBaseModel): Another model to merge fields with.
-		
-		Returns:
-			BaseModel: A new model that includes all fields from both models, giving
-			priority to values and types from the current model for common fields.
-		"""
-		# Dump current and other model data into dictionaries
-		self_dump = self.model_dump()
-		other_dump = other.model_dump()
-		# Merge data, prioritizing values from self
-		data = {**other_dump, **self_dump}
-		# Use union to create a new model with all fields
-		return self.union(self.__repr_name__(), other)(**data)
