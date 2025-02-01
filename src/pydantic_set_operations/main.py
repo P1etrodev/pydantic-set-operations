@@ -1,4 +1,4 @@
-from typing import Type, Literal
+from typing import Type, Literal, Sequence
 
 from pydantic import BaseModel, create_model
 
@@ -11,9 +11,10 @@ class ExtendedBaseModel(BaseModel):
 	"""
 
 	@classmethod
-	def __ensure_required_fields(cls, fields: list[str], mode: Literal['pick', 'omit']):
+	def __ensure_required_fields(cls, fields: Sequence[str], mode: Literal['pick', 'omit']):
 		"""Ensure the presence (or absence) of the required fields"""
 		required_fields = ['model_config', '__table__', '__columns__']
+		fields = list(fields)
 		
 		if mode == 'omit':
 			return [field for field in fields if field not in required_fields]
