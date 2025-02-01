@@ -9,6 +9,16 @@ class ExtendedBaseModel(BaseModel):
 	and difference. This class supports bitwise operators (|, &, -) between instances,
 	where the left instance (self) takes precedence for both values and data types.
 	"""
+
+	@classmethod
+	def __ensure_required_fields(cls, fields: list[str], mode: Literal['pick', 'omit']):
+		"""Ensure the presence (or absence) of the required fields"""
+		required_fields = ['model_config', '__table__', '__columns__']
+		
+		if mode == 'omit':
+			return [field for field in fields if field not in required_fields]
+		elif mode == 'pick':
+			return list(set(fields + required_fields))
 	
 	@classmethod
 	def union(cls, _name: str, other: 'ExtendedBaseModel') -> Type['ExtendedBaseModel']:
@@ -48,7 +58,7 @@ class ExtendedBaseModel(BaseModel):
 		new_fields = {
 			field: (info.annotation, ...)
 			for field, info in cls.model_fields.items()
-			if field not in excluded_fields
+			if field not in cls.__ensure_required_fields(excluded_fields, 'omit')
 		}
 		return create_model(_name, __base__=ExtendedBaseModel, **new_fields)
 	
@@ -68,7 +78,7 @@ class ExtendedBaseModel(BaseModel):
 		new_fields = {
 			field: (info.annotation, ...)
 			for field, info in cls.model_fields.items()
-			if field in included_fields
+			if field in cls.__ensure_required_fields(included_fields, 'pick')
 		}
 		return create_model(_name, __base__=ExtendedBaseModel, **new_fields)
 	
