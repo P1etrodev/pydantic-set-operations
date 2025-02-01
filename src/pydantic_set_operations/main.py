@@ -29,7 +29,7 @@ class ExtendedBaseModel(BaseModel):
 		fields_data = {*other.model_fields.items(), *cls.model_fields.items()}
 		# Construct new fields with types and make them required (indicated by `...`)
 		new_fields = {field: (info.annotation, ...) for field, info in fields_data}
-		return create_model(_name, __base__=BaseModel, **new_fields)
+		return create_model(_name, __base__=ExtendedBaseModel, **new_fields)
 	
 	@classmethod
 	def omit(cls, _name: str, *excluded_fields: str) -> Type['ExtendedBaseModel']:
@@ -50,7 +50,7 @@ class ExtendedBaseModel(BaseModel):
 			for field, info in cls.model_fields.items()
 			if field not in excluded_fields
 		}
-		return create_model(_name, __base__=BaseModel, **new_fields)
+		return create_model(_name, __base__=ExtendedBaseModel, **new_fields)
 	
 	@classmethod
 	def pick(cls, _name: str, *included_fields: str) -> Type['ExtendedBaseModel']:
@@ -70,7 +70,7 @@ class ExtendedBaseModel(BaseModel):
 			for field, info in cls.model_fields.items()
 			if field in excluded_fields
 		}
-		return create_model(_name, __base__=BaseModel, **new_fields)
+		return create_model(_name, __base__=ExtendedBaseModel, **new_fields)
 	
 	def __and__(self, other: 'ExtendedBaseModel') -> 'ExtendedBaseModel':
 		"""
