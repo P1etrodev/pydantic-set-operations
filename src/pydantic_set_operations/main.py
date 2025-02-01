@@ -26,10 +26,10 @@ class ExtendedBaseModel(BaseModel):
 			the other model.
 		"""
 		# Merge annotations from both models, with precedence for the current class
-		fields_data = {*other.__annotations__.items(), *cls.__annotations__.items()}
+		fields_data = {*other.model_fields.items(), *cls.model_fields.items()}
 		# Construct new fields with types and make them required (indicated by `...`)
-		new_fields = {field: (annotation, ...) for field, annotation in fields_data}
-		return create_model(_name, __base__=cls, **new_fields)
+		new_fields = {field: (info.annotation, ...) for field, info in fields_data}
+		return create_model(_name, __base__=BaseModel, **new_fields)
 	
 	@classmethod
 	def omit(cls, _name: str, *excluded_fields: str) -> Type['ExtendedBaseModel']:
@@ -46,11 +46,11 @@ class ExtendedBaseModel(BaseModel):
 		"""
 		# Filter out fields specified in excluded_fields
 		new_fields = {
-			field: (cls.__annotations__[field], ...)
-			for field in cls.__annotations__
+			field: (info.annotation, ...)
+			for field, info in cls.model_fields.items()
 			if field not in excluded_fields
 		}
-		return create_model(_name, __base__=cls, **new_fields)
+		return create_model(_name, __base__=BaseModel, **new_fields)
 	
 	@classmethod
 	def pick(cls, _name: str, *included_fields: str) -> Type['ExtendedBaseModel']:
@@ -66,11 +66,11 @@ class ExtendedBaseModel(BaseModel):
 		"""
 		# Select fields specified in included_fields
 		new_fields = {
-			field: (cls.__annotations__[field], ...)
-			for field in cls.__annotations__
-			if field in included_fields
+			field: (info.annotation, ...)
+			for field, info in cls.model_fields.items()
+			if field in excluded_fields
 		}
-		return create_model(_name, __base__=cls, **new_fields)
+		return create_model(_name, __base__=BaseModel, **new_fields)
 	
 	def __and__(self, other: 'ExtendedBaseModel') -> 'ExtendedBaseModel':
 		"""
