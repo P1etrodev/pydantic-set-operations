@@ -68,7 +68,7 @@ class ExtendedBaseModel(BaseModel):
 		new_fields = {
 			field: (info.annotation, ...)
 			for field, info in cls.model_fields.items()
-			if field in excluded_fields
+			if field in included_fields
 		}
 		return create_model(_name, __base__=ExtendedBaseModel, **new_fields)
 	
