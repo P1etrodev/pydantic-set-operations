@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Type, Literal
 
 from pydantic import BaseModel, create_model
 
