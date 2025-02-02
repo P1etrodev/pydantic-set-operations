@@ -43,7 +43,7 @@ class ExtendedBaseModel(BaseModel):
 		return create_model(_name, __config__=_config, __base__=ExtendedBaseModel, **new_fields)
 	
 	@classmethod
-	def omit(cls, _name: str, *excluded_fields: str, _config: ConfigDict | dict = None) -> Type['ExtendedBaseModel']
+	def omit(cls, _name: str, *excluded_fields: str, _config: ConfigDict | dict = None) -> Type['ExtendedBaseModel']:
 		"""
 		Exclude specified fields from the current model to create a new model with
 		only the remaining fields.
@@ -64,7 +64,7 @@ class ExtendedBaseModel(BaseModel):
 		return create_model(_name, __base__=ExtendedBaseModel, **new_fields)
 	
 	@classmethod
-	def pick(cls, _name: str, *included_fields: str, _config: ConfigDict | dict = None) -> Type['ExtendedBaseModel']
+	def pick(cls, _name: str, *included_fields: str, _config: ConfigDict | dict = None) -> Type['ExtendedBaseModel']:
 		"""
 		Generate a new model with only the specified fields from the current model.
 		
