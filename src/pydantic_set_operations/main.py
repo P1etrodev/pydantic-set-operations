@@ -1,6 +1,6 @@
 from typing import Type, Literal, Sequence
 
-from pydantic import BaseModel, create_model
+from pydantic import BaseModel, ConfigDict, create_model
 
 
 class ExtendedBaseModel(BaseModel):
@@ -13,7 +13,7 @@ class ExtendedBaseModel(BaseModel):
 	@classmethod
 	def __ensure_required_fields(cls, fields: Sequence[str], mode: Literal['pick', 'omit']):
 		"""Ensure the presence (or absence) of the required fields"""
-		required_fields = ['model_config', '__table__', '__columns__']
+		required_fields = ['__table__', '__columns__']
 		fields = list(fields)
 		
 		if mode == 'omit':
@@ -22,7 +22,7 @@ class ExtendedBaseModel(BaseModel):
 			return list(set(fields + required_fields))
 	
 	@classmethod
-	def union(cls, _name: str, other: 'ExtendedBaseModel') -> Type['ExtendedBaseModel']:
+	def union(cls, _name: str, other: 'ExtendedBaseModel', _config: ConfigDict | dict = None) -> Type['ExtendedBaseModel']:
 		"""
 		Creates a new model that merges fields from the current class and another
 		ExtendedBaseModel class. In case of overlapping fields, values and data types
@@ -40,10 +40,10 @@ class ExtendedBaseModel(BaseModel):
 		fields_data = {*other.model_fields.items(), *cls.model_fields.items()}
 		# Construct new fields with types and make them required (indicated by `...`)
 		new_fields = {field: (info.annotation, ...) for field, info in fields_data}
-		return create_model(_name, __base__=ExtendedBaseModel, **new_fields)
+		return create_model(_name, __config__=_config, __base__=ExtendedBaseModel, **new_fields)
 	
 	@classmethod
-	def omit(cls, _name: str, *excluded_fields: str) -> Type['ExtendedBaseModel']:
+	def omit(cls, _name: str, *excluded_fields: str, _config: ConfigDict | dict = None) -> Type['ExtendedBaseModel']
 		"""
 		Exclude specified fields from the current model to create a new model with
 		only the remaining fields.
@@ -64,7 +64,7 @@ class ExtendedBaseModel(BaseModel):
 		return create_model(_name, __base__=ExtendedBaseModel, **new_fields)
 	
 	@classmethod
-	def pick(cls, _name: str, *included_fields: str) -> Type['ExtendedBaseModel']:
+	def pick(cls, _name: str, *included_fields: str, _config: ConfigDict | dict = None) -> Type['ExtendedBaseModel']
 		"""
 		Generate a new model with only the specified fields from the current model.
 		
@@ -81,7 +81,7 @@ class ExtendedBaseModel(BaseModel):
 			for field, info in cls.model_fields.items()
 			if field in cls.__ensure_required_fields(included_fields, 'pick')
 		}
-		return create_model(_name, __base__=ExtendedBaseModel, **new_fields)
+		return create_model(_name, __config__=_config, __base__=ExtendedBaseModel, **new_fields)
 	
 	def __and__(self, other: 'ExtendedBaseModel') -> 'ExtendedBaseModel':
 		"""
@@ -104,7 +104,7 @@ class ExtendedBaseModel(BaseModel):
 		# Build data for the new model using values from self
 		data = {field: self_dump[field] for field in fields}
 		# Use pick to create a new model with the common fields
-		return self.pick(self.__repr_name__(), *fields)(**data)
+		return self.pick(self.__repr_name__(), *fields, _config=self.model_config)(**data)
 	
 	def __sub__(self, other: 'ExtendedBaseModel') -> 'ExtendedBaseModel':
 		"""
@@ -121,7 +121,8 @@ class ExtendedBaseModel(BaseModel):
 		# Use omit to exclude fields present in the other model
 		return self.omit(
 			self.__repr_name__(),
-			*other.model_dump().keys()
+			*other.model_dump().keys(),
+			_config=self.model_config
 		)(**self.model_dump())
 	
 	def __or__(self, other: 'ExtendedBaseModel') -> 'ExtendedBaseModel':
@@ -143,4 +144,4 @@ class ExtendedBaseModel(BaseModel):
 		# Merge data, prioritizing values from self
 		data = {**other_dump, **self_dump}
 		# Use union to create a new model with all fields
-		return self.union(self.__repr_name__(), other)(**data)
+		return self.union(self.__repr_name__(), other, _config=self.model_config)(**data)
